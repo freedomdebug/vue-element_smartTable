@@ -30,13 +30,15 @@
       </span>
     </el-dialog>
 
-    <el-button type="primary"  @click="handleSaveClick">保存</el-button>
-    <el-button type="primary" :disabled="selectIndexArray.length===0" @click="handleEditClick">编辑</el-button>
-    <el-button type="warning" :disabled="selectIndexArray.length===0" @click="handleDeleteClick">删除</el-button>
-    <!-- <el-button @click="toggleSelection([tableData[1], tableData[2]])">切换第二、第三行的选中状态</el-button> -->
-    <el-button @click="toggleSelection()">取消选择</el-button>
-    <el-button type="primary" @click="handleExport">导出</el-button>
-    <el-button type="primary" @click="handleImport">导入</el-button>
+    <el-row style="text-align:right">
+      <el-button type="primary"  @click="handleSaveClick">保存</el-button>
+      <el-button type="primary" :disabled="selectIndexArray.length===0" @click="handleEditClick">编辑</el-button>
+      <el-button type="warning" :disabled="selectIndexArray.length===0" @click="handleDeleteClick">删除</el-button>
+      <!-- <el-button @click="toggleSelection([tableData[1], tableData[2]])">切换第二、第三行的选中状态</el-button> -->
+      <el-button @click="toggleSelection()">取消选择</el-button>
+      <el-button type="primary" @click="handleExport">导出</el-button>
+      <el-button type="primary" @click="handleImport">导入</el-button>
+    </el-row>
 
     <el-table ref="multipleTable" :data="tableData"  align="left" tooltip-effect="dark" style="width: 100%" 
     @selection-change="handleSelectChange"
@@ -50,17 +52,24 @@
       </el-table-column>
       <el-table-column prop="code" label="科目编码" width="240">
         <template slot-scope="scope">
-          <i class="el-icon-arrow-up" v-show="getParentChild(scope.row.code).length>0"></i>
-          {{ scope.row.code }}
-          <el-button type="danger" size="mini" icon="el-icon-plus" circle @click="handleAddClick(scope.row)"></el-button>
+          <span v-show="!scope.row.editStauts"   :style="{'padding-left':getLevel(scope.row.code)*10+'px'}">
+            <i class="el-icon-arrow-up" v-show="getParentChild(scope.row.code).length>0 && !scope.row.editStauts"></i>
+            {{ scope.row.code }}
+            </span>
+          <el-input v-model="scope.row.code" placeholder="科目编码"  v-show="scope.row.editStauts"></el-input>
+          <el-button type="danger" size="mini" icon="el-icon-plus" circle @click="handleAddClick(scope.row)"  v-show="!scope.row.editStauts"></el-button>
         </template>
       </el-table-column>
       <el-table-column prop="name" label="科目名称" width="120">
-        <template slot-scope="scope">{{ scope.row.name }}</template>
+        <template slot-scope="scope">
+          <span v-show="!scope.row.editStauts">{{scope.row.name}}</span>
+          <el-input v-model="scope.row.name" placeholder="科目名称"  v-show="scope.row.editStauts"></el-input>
+          </template>
       </el-table-column>
       <el-table-column prop="type" label="科目类型" show-overflow-tooltip>
         <template slot-scope="scope">
-            <el-select v-model="scope.row.type" placeholder="请选择">
+           <span v-show="!scope.row.editStauts">{{scope.row.type}}</span>
+            <el-select v-model="scope.row.type" placeholder="请选择" v-show="scope.row.editStauts">
               <el-option
                 v-for="item in selectData.typeList"
                 :key="item.value"
@@ -70,7 +79,7 @@
             </el-select>
         </template>
       </el-table-column>
-      <el-table-column prop="status" label="启用" show-overflow-tooltip>
+      <el-table-column prop="status" label="启用" show-overflow-tooltip align="center">
         <template slot-scope="scope">
           <el-checkbox v-model="scope.row.status"></el-checkbox>
         </template>
@@ -80,7 +89,8 @@
 </template>
 
 <script>
-import uuidv1 from "uuid/v1";
+import Vue from 'vue'
+import uuidv1 from "uuid/v1"
 export default {
   data() {
     return {
@@ -102,11 +112,14 @@ export default {
           code: "1001",
           name: "root",
           type: "0",
-          status: 0
+          status: true
         }
       ],
       selectIndexArray: []
     };
+  },
+  mounted(){
+    this.tableData.map(item=>{item.editStauts = false})
   },
   filters:{
     level(parentCode){
@@ -143,8 +156,9 @@ export default {
     },
     getInsertRowIndex(parentIndex,parentCode){
       let _insertIndex = 0 
-      let _ChildRowArray = []
-      _ChildRowArray = this.getParentChild(parentCode)
+      let _ChildRowArray = this.tableData.filter(item=>{
+        return item.code.substr(0,parentCode.length+1) === parentCode+"."
+      })
       _insertIndex = parentIndex + _ChildRowArray.length + 1
       return _insertIndex
     },
@@ -179,7 +193,7 @@ export default {
         code: this.generateCode(parentRow.code),
         name: "root",
         type: "0",
-        status: 0
+        status: true
       };
     },
     getROwIndex(row) {
@@ -215,7 +229,14 @@ export default {
         }
       })
     },
-    handleEditClick() {},
+    handleEditClick() {
+      let _this = this
+      this.selectIndexArray.map(index=>{
+        let _newItem = _this.tableData[index]
+        _newItem.editStauts = true
+        Vue.set(_this.tableData, index, _newItem)
+      })
+    },
     handleAddClick(row) {
       let _index = this.getROwIndex(row);
       let _insertIndex = this.getInsertRowIndex(_index,row.code)
@@ -228,7 +249,13 @@ export default {
       this.selectIndexArray = [];
     },
     handleSaveClick(){
-
+      let _this = this
+      this.selectIndexArray.map(index=>{
+        let _newItem = _this.tableData[index]
+        _newItem.editStauts = false
+        Vue.set(_this.tableData, index, _newItem)
+      })
+      _this.selectIndexArray = []
     },
     handleExport(){
       if(this.selectIndexArray.length>0){
