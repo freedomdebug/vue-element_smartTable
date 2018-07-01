@@ -42,7 +42,6 @@
 
     <el-table ref="multipleTable" :data="tableData"  align="left" tooltip-effect="dark" style="width: 100%" 
     @selection-change="handleSelectChange" 
-    border="true"
     height="500">
       <el-table-column type="selection" width="55">
       </el-table-column>
@@ -246,6 +245,7 @@ export default {
       this.addRowToTable(_insertIndex,row);
     },
     handleDeleteClick() {
+      let _this = this
       if(this.selectIndexArray.indexOf(0)>-1){
         this.$message({
           message: 'root节点不可删除',
@@ -253,10 +253,13 @@ export default {
         });
         return
       }
-      this.selectIndexArray.map(item => {
-        this.deleteRowFromTable(item);
+      let i = 0 //js array+splice index change，so becareful
+      _this.selectIndexArray.map(item => {
+        console.log(item)
+        _this.tableData.splice(item-i, 1);
+        i++
       });
-      this.selectIndexArray = [];
+      _this.selectIndexArray = [];
     },
     handleSaveClick(){
       let _this = this
