@@ -1,12 +1,45 @@
 <template>
   <div>
+    <el-dialog
+      title="导入"
+      :visible.sync="importDialogVisible"
+      width="30%"
+      center>
+      <span>
+        模板下载
+      </span>
+      <span>
+        <el-upload
+          class="upload-demo"
+          ref="upload"
+          action="https://jsonplaceholder.typicode.com/posts/"
+          :on-preview="handlePreview"
+          :on-remove="handleRemove"
+          :file-list="fileList"
+          :multiple="false" 
+          :show-file-list="false"
+          :auto-upload="false">
+          <el-button slot="trigger" size="small" type="primary">选取文件</el-button>
+          <el-button style="margin-left: 10px;" size="small" type="success" @click="submitUpload">上传到服务器</el-button>
+          <div slot="tip" class="el-upload__tip">只能上传xls/xlsx文件，且不超过500kb</div>
+        </el-upload>
+      </span>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="importDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="handleSubmitImport">确 定</el-button>
+      </span>
+    </el-dialog>
+
+    <el-button type="primary"  @click="handleSaveClick">保存</el-button>
     <el-button type="primary" :disabled="selectIndexArray.length===0" @click="handleEditClick">编辑</el-button>
     <el-button type="warning" :disabled="selectIndexArray.length===0" @click="handleDeleteClick">删除</el-button>
     <!-- <el-button @click="toggleSelection([tableData[1], tableData[2]])">切换第二、第三行的选中状态</el-button> -->
     <el-button @click="toggleSelection()">取消选择</el-button>
+    <el-button type="primary" @click="handleExport">导出</el-button>
+    <el-button type="primary" @click="handleImport">导入</el-button>
+
     <el-table ref="multipleTable" :data="tableData"  align="left" tooltip-effect="dark" style="width: 100%" 
-    @select-all="handleSelectionAll" 
-    @select="handleSelect"
+    @selection-change="handleSelectChange"
     height="500">
       <el-table-column type="selection" width="55">
       </el-table-column>
@@ -51,6 +84,8 @@ import uuidv1 from "uuid/v1";
 export default {
   data() {
     return {
+      importDialogVisible:false,
+      fileList: [],
       selectData: {
         typeList:[{
           label:"保安",
@@ -168,27 +203,17 @@ export default {
       }
       this.selectIndexArray = [];
     },
-    handleSelect(selection, row){
+    handleSelectChange(selection){
+      console.log(selection)
       let _this = this;
-      let selectRowIndex = this.getROwIndex(row);
-      var index = this.selectIndexArray.indexOf(selectRowIndex);
-      if(index>-1){
-      this.selectIndexArray.splice(index, 1);
-      }else{
-        if (selectRowIndex !== -1) {
-          console.log(selectRowIndex);
-          _this.selectIndexArray.push(selectRowIndex);
+      _this.selectIndexArray = []
+      selection.map(row=>{
+        let selectRowIndex = this.getROwIndex(row);
+        if (selectRowIndex > -1) {
+            console.log(selectRowIndex);
+            _this.selectIndexArray.push(selectRowIndex);
         }
-      }
-
-    },
-    handleSelectionAll(selection) {
-      let _this = this;
-      if(selection.length>0){
-        selection.map((val, index) => {
-          _this.handleSelect(null,val)
-        });
-      }
+      })
     },
     handleEditClick() {},
     handleAddClick(row) {
@@ -201,6 +226,42 @@ export default {
         this.deleteRowFromTable(item);
       });
       this.selectIndexArray = [];
+    },
+    handleSaveClick(){
+
+    },
+    handleExport(){
+      if(this.selectIndexArray.length>0){
+        this.$message({
+          message: '当前有未保存信息',
+          type: 'warning'
+        });
+      }else{
+        //api
+      }
+    },
+    handleImport(){
+       if(this.selectIndexArray.length>0){
+        this.$message({
+          message: '当前有未保存信息',
+          type: 'warning'
+        });
+      }else{
+        this.importDialogVisible = true
+      }
+      
+    },
+    handleSubmitImport(){
+      this.importDialogVisible = false
+    },
+    submitUpload() {
+      this.$refs.upload.submit();
+    },
+    handleRemove(file, fileList) {
+      console.log(file, fileList);
+    },
+    handlePreview(file) {
+      console.log(file);
     }
   }
 };
