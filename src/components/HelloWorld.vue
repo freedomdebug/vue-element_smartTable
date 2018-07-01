@@ -30,7 +30,7 @@
       </span>
     </el-dialog>
 
-    <el-row style="text-align:right">
+    <el-row style="text-align:right;margin:10px">
       <el-button type="primary"  @click="handleSaveClick">保存</el-button>
       <el-button type="primary" :disabled="selectIndexArray.length===0" @click="handleEditClick">编辑</el-button>
       <el-button type="warning" :disabled="selectIndexArray.length===0" @click="handleDeleteClick">删除</el-button>
@@ -41,7 +41,8 @@
     </el-row>
 
     <el-table ref="multipleTable" :data="tableData"  align="left" tooltip-effect="dark" style="width: 100%" 
-    @selection-change="handleSelectChange"
+    @selection-change="handleSelectChange" 
+    border="true"
     height="500">
       <el-table-column type="selection" width="55">
       </el-table-column>
@@ -55,8 +56,10 @@
           <span v-show="!scope.row.editStauts"   :style="{'padding-left':getLevel(scope.row.code)*10+'px'}">
             <i class="el-icon-arrow-up" v-show="getParentChild(scope.row.code).length>0 && !scope.row.editStauts"></i>
             {{ scope.row.code }}
-            </span>
-          <el-input v-model="scope.row.code" placeholder="科目编码"  v-show="scope.row.editStauts"></el-input>
+          </span>
+          <el-tooltip class="item" effect="light"  content="1001.xx" placement="top-start">
+            <el-input v-model="scope.row.code" placeholder="科目编码"  v-show="scope.row.editStauts"></el-input>
+          </el-tooltip>
           <el-button type="danger" size="mini" icon="el-icon-plus" circle @click="handleAddClick(scope.row)"  v-show="!scope.row.editStauts"></el-button>
         </template>
       </el-table-column>
@@ -243,6 +246,13 @@ export default {
       this.addRowToTable(_insertIndex,row);
     },
     handleDeleteClick() {
+      if(this.selectIndexArray.indexOf(0)>-1){
+        this.$message({
+          message: 'root节点不可删除',
+          type: 'warning'
+        });
+        return
+      }
       this.selectIndexArray.map(item => {
         this.deleteRowFromTable(item);
       });
@@ -256,6 +266,7 @@ export default {
         Vue.set(_this.tableData, index, _newItem)
       })
       _this.selectIndexArray = []
+      this.toggleSelection()
     },
     handleExport(){
       if(this.selectIndexArray.length>0){
