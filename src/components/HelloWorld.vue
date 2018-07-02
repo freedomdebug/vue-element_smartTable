@@ -40,7 +40,7 @@
       <el-button type="primary" @click="handleImport">导入</el-button>
     </el-row>
 
-    <el-table ref="multipleTable" :data="tableData"  align="left" tooltip-effect="dark" style="width: 100%" 
+    <el-table ref="multipleTable" :data="tableData | filterTable(tableData)"  align="left" tooltip-effect="dark" style="width: 100%" 
     @selection-change="handleSelectChange" 
     height="500">
       <el-table-column type="selection" width="55">
@@ -53,7 +53,7 @@
       <el-table-column prop="code" label="科目编码" width="240">
         <template slot-scope="scope">
           <span v-show="!scope.row.editStauts"   :style="{'padding-left':getLevel(scope.row.code)*10+'px'}">
-            <i class="el-icon-arrow-up" v-show="getParentChild(scope.row.code).length>0 && !scope.row.editStauts"></i>
+            <i class="el-icon-arrow-up" v-show="getParentChild(scope.row.code).length>0 && !scope.row.editStauts" @click="handleExpandClick(scope.row.code)"></i>
             {{ scope.row.code }}
           </span>
           <el-tooltip class="item" effect="light"  content="1001.xx" placement="top-start">
@@ -117,7 +117,8 @@ export default {
           status: true
         }
       ],
-      selectIndexArray: []
+      selectIndexArray: [],
+      selectExpandArray:[]
     };
   },
   mounted(){
@@ -143,6 +144,10 @@ export default {
       if (noWan.toString().length < 4) noWan = "0" + noWan;
       level = overWan ? getWan(overWan) + "万" + getWan(noWan) : getWan(num);
       return level + "级"
+    },
+    filterTable(tableData){
+      console.log("filterTable")
+      return tableData
     }
   },
   methods: {
@@ -270,6 +275,9 @@ export default {
       })
       _this.selectIndexArray = []
       this.toggleSelection()
+    },
+    handleExpandClick(parentCode){
+      if(this.selectExpandArray.indexOf(parentCode) === -1) this.selectExpandArray.push(parentCode)
     },
     handleExport(){
       if(this.selectIndexArray.length>0){
